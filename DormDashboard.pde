@@ -1,13 +1,18 @@
-//Label dateLabel;
+
 import java.util.Date;
+import ipcapture.*;
 
 int viewOffset = 40;
+IPCapture cam;
 
 void setup() {
   //size(600, 600);
   smooth(8);
   fullScreen();
 
+  
+  cam = new IPCapture(this, "http://shapiro.cam.lib.umich.edu/mjpg/video.mjpg", "", "");
+  cam.start();
   
   fill(255);
   
@@ -19,6 +24,11 @@ void draw() {
   
   upateTimeLabel();
   updateDateLabel();
+  
+  if (cam.isAvailable()) {
+    cam.read();
+    image(cam,viewOffset,300, 400, 700);
+  }
   
   
   delay(300);
@@ -55,11 +65,19 @@ void updateDateLabel() {
   int dayOfWeek = new Date().getDay();
   String stringDayOfWeek = dayArray[dayOfWeek - 1];
   
-  
   String[] monthArray = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
   String monthString = monthArray[month];
   
   String fullDateString = stringDayOfWeek + ", " + monthString + " " + day + ", " + year;
   textSize(40);
   text(fullDateString, viewOffset, 170);
+}
+
+void keyPressed() {
+  if (key == ' ') {
+    if (!cam.isAlive()) {
+      println("cam not alive");
+    }
+
+  }
 }
