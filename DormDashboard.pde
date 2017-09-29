@@ -7,7 +7,7 @@ void setup() {
   //size(600, 600);
   smooth(8);
   fullScreen();
-  background(0,39,76);
+
   
   fill(255);
   
@@ -15,7 +15,7 @@ void setup() {
 }
 
 void draw() {
-  background(0,39,76);
+  background(17,122,146);
   
   upateTimeLabel();
   updateDateLabel();
