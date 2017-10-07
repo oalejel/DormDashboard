@@ -5,6 +5,11 @@ import ipcapture.*;
 int viewOffset = 40;
 IPCapture cam;
 
+int highTemp = 0;
+int lowTemp = 0;
+String weatherDescription = "";
+
+
 void setup() {
   //size(600, 600);
   smooth(8);
@@ -17,6 +22,9 @@ void setup() {
   fill(255);
 
   //dateLabel = new Label("00:00:00 PM");
+  
+  //call this on every new day
+  resetWeather();
 }
 
 void draw() {
@@ -25,7 +33,7 @@ void draw() {
   upateTimeLabel();
   updateDateLabel();
   updateCam();
-
+  updateWeatherDisplay();
 
 
   delay(100);
@@ -80,10 +88,35 @@ void updateDateLabel() {
   text(fullDateString, viewOffset, 170);
 }
 
+void updateWeatherDisplay() {
+  textSize(40);
+  String fulltempString = "H: " + highTemp + ", L: " + lowTemp;
+  text(fulltempString, width - 280, 200);
+  
+  text(weatherDescription, width - 280, 160);
+}
+
 void keyPressed() {
   if (key == ' ') {
     if (!cam.isAlive()) {
       println("cam not alive");
     }
   }
+}
+
+void resetWeather() {
+  String[] lines = loadStrings("https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20weather.forecast%20where%20woeid%20in%20(select%20woeid%20from%20geo.places(1)%20where%20text%3D%22ann%20arbor%2C%20MI%2C%20USA%22)&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys");
+  String jsonString = join(lines, " "); 
+  
+  JSONObject json = parseJSONObject(jsonString);
+  JSONObject query = json.getJSONObject("query");
+  JSONObject results = query.getJSONObject("results");
+  JSONObject channel = results.getJSONObject("channel");
+  JSONObject item = channel.getJSONObject("item");
+  JSONArray forecast = item.getJSONArray("forecast");
+  //println(item);
+  JSONObject todayInfo = forecast.getJSONObject(0);
+  highTemp = int(todayInfo.getString("high"));
+  lowTemp = int(todayInfo.getString("low"));
+  weatherDescription = todayInfo.getString("text");
 }
