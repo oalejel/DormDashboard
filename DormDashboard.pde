@@ -1,4 +1,3 @@
-
 import java.util.Date;
 import ipcapture.*;
 
@@ -28,7 +27,7 @@ void setup() {
 }
 
 void draw() {
-  background(17, 122, 146);
+  background(17, 122, 180);
 
   upateTimeLabel();
   updateDateLabel();
@@ -55,6 +54,8 @@ void upateTimeLabel() {
     h -= 12;
     hString = h < 10 ? "0" + h : "" + h;
     periodString = "PM";
+  } else if (h == 0) {
+    hString = "12";
   }
 
   String timeString = hString + ":" + mString + ":" + sString + " " + periodString; 
@@ -62,13 +63,17 @@ void upateTimeLabel() {
 }
 
 void updateCam() {
+  
+  textSize(30);
+  text("Live Diag Feed", viewOffset, 370);
+  
   if (cam.isAvailable()) {
     cam.read();
   }
   float camWidth = 500;
   float camHeight = 281;
-  float tuner = 1.5;
-  image(cam, viewOffset, 300, camWidth * tuner, camHeight * tuner);
+  float tuner = 1.8;
+  image(cam, viewOffset, height - (viewOffset + camHeight * tuner), camWidth * tuner, camHeight * tuner);
 }
 
 void updateDateLabel() {
@@ -91,9 +96,9 @@ void updateDateLabel() {
 void updateWeatherDisplay() {
   textSize(40);
   String fulltempString = "H: " + highTemp + ", L: " + lowTemp;
-  text(fulltempString, width - 280, 200);
+  text(fulltempString, width - 340, 200);
   
-  text(weatherDescription, width - 280, 160);
+  text(weatherDescription, width - 340, 160);
 }
 
 void keyPressed() {
