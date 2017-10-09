@@ -8,6 +8,9 @@ int highTemp = 0;
 int lowTemp = 0;
 String weatherDescription = "";
 
+  int month = month();
+  int day = day();
+  int year = year();
 
 void setup() {
   //size(600, 600);
@@ -19,8 +22,6 @@ void setup() {
   cam.start();
 
   fill(255);
-
-  //dateLabel = new Label("00:00:00 PM");
   
   //call this on every new day
   resetWeather();
@@ -77,9 +78,9 @@ void updateCam() {
 }
 
 void updateDateLabel() {
-  int month = month();
-  int day = day();
-  int year = year();
+  month = month();
+  day = day();
+  year = year();
 
   String[] dayArray = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
   int dayOfWeek = new Date().getDay();
@@ -124,4 +125,15 @@ void resetWeather() {
   highTemp = int(todayInfo.getString("high"));
   lowTemp = int(todayInfo.getString("low"));
   weatherDescription = todayInfo.getString("text");
+}
+
+
+class Calendar {
+  String[] events;
+  String[] times;
+  
+  int getNextEventIndex() {
+    return 0;
+  }
+  
 }
