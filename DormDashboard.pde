@@ -8,15 +8,16 @@ int highTemp = 0;
 int lowTemp = 0;
 String weatherDescription = "";
 
-  int month = month();
-  int day = day();
-  int year = year();
+String fullDateString;
+
+int month = month();
+int day = day();
+int year = year();
 
 void setup() {
   //size(600, 600);
   smooth(8);
   fullScreen();
-
 
   cam = new IPCapture(this, "http://shapiro.cam.lib.umich.edu/mjpg/video.mjpg", "", "");
   cam.start();
@@ -25,16 +26,25 @@ void setup() {
   
   //call this on every new day
   resetWeather();
+  updateDate();
+  drawDateLabel();
 }
 
 void draw() {
   background(17, 122, 180);
 
   upateTimeLabel();
-  updateDateLabel();
+  
   updateCam();
-  updateWeatherDisplay();
-
+  drawWeatherDisplay();
+  drawDateLabel();
+  
+  if (day != day()) {
+    //we dont want to recalculate everything 
+    //unless we have a new day for some things
+    updateDate();
+    resetWeather();
+  }
 
   delay(100);
 }
@@ -64,7 +74,6 @@ void upateTimeLabel() {
 }
 
 void updateCam() {
-  
   textSize(30);
   text("Live Diag Feed", viewOffset, 370);
   
@@ -77,7 +86,7 @@ void updateCam() {
   image(cam, viewOffset, height - (viewOffset + camHeight * tuner), camWidth * tuner, camHeight * tuner);
 }
 
-void updateDateLabel() {
+void updateDate() {
   month = month();
   day = day();
   year = year();
@@ -89,12 +98,15 @@ void updateDateLabel() {
   String[] monthArray = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
   String monthString = monthArray[month];
 
-  String fullDateString = stringDayOfWeek + ", " + monthString + " " + day + ", " + year;
+  fullDateString = stringDayOfWeek + ", " + monthString + " " + day + ", " + year;
+}
+
+void drawDateLabel() {
   textSize(40);
   text(fullDateString, viewOffset, 170);
 }
 
-void updateWeatherDisplay() {
+void drawWeatherDisplay() {
   textSize(40);
   String fulltempString = "H: " + highTemp + ", L: " + lowTemp;
   text(fulltempString, width - 340, 200);
