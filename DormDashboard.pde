@@ -14,10 +14,61 @@ int month = month();
 int day = day();
 int year = year();
 
+
+
+
+
+
+
+
+
+
+// Exercise 17-6: Stock Ticker 
+
+// An array of stock objects
+Stock[] stocks = new Stock[6];
+float totalW = 0;
+
+PFont f; // Global font variable
+
+
+
+
+
+
 void setup() {
+  pixelDensity(2);
   //size(600, 600);
   smooth(8);
   fullScreen();
+  
+  
+  
+  f = createFont( "Arial", 16);
+
+  // Giving the stocks names and values to display
+  stocks[0] = new Stock("ZOOG", 903);
+  stocks[1] = new Stock("FOR", 55);
+  stocks[2] = new Stock("ELSE", 100);
+  stocks[3] = new Stock("BLAH", 100);
+  stocks[4] = new Stock("OF", 100);
+  stocks[5] = new Stock("PROC", 92);  
+
+  // We space the stock quotes out according to textWidth()
+  float x = 0;
+  for (int i = 0; i < stocks.length; i++) {
+    stocks[i].setX(x);
+    x = x + (stocks[i].textW());
+  }
+  totalW = x;
+  
+  
+  
+  
+  
+  
+  //PFont helvetica = loadFont("Helvetica-Bold-200.vlw");
+  //textFont(helvetica);
 
   cam = new IPCapture(this, "http://shapiro.cam.lib.umich.edu/mjpg/video.mjpg", "", "");
   cam.start();
@@ -31,8 +82,23 @@ void setup() {
 }
 
 void draw() {
-  background(17, 122, 180);
+  
 
+  
+  //draw blue background and other background shapes
+  background(0, 0, 74);
+  fill(0,0,0);
+  rect(0, 200, width, 60);
+
+    // Move and display all quotes
+  for (int i = 0; i < stocks.length; i++) {
+    stocks[i].move();
+    stocks[i].display();
+  }
+
+
+  //set font color to white
+  fill(255);
   upateTimeLabel();
   
   updateCam();
@@ -50,7 +116,7 @@ void draw() {
 }
 
 void upateTimeLabel() {
-  textSize(100);
+  textSize(60);
   int s = second();
   int m = minute();
   int h = hour();
@@ -70,18 +136,22 @@ void upateTimeLabel() {
   }
 
   String timeString = hString + ":" + mString + ":" + sString + " " + periodString; 
-  text(timeString, viewOffset, 110);
+  //change text alignment for labels on right side
+  textAlign(RIGHT);
+  text(timeString, width - viewOffset, viewOffset + 50);
+  textAlign(LEFT);
 }
 
 void updateCam() {
   textSize(30);
-  text("Live Diag Feed", viewOffset, 370);
+  text("Live UGLi Video Feed", viewOffset, 390);
   
   if (cam.isAvailable()) {
     cam.read();
   }
-  float camWidth = 500;
-  float camHeight = 281;
+  
+  float camWidth = 350;
+  float camHeight = camWidth * (281.0 / 500.0);
   float tuner = 1.8;
   image(cam, viewOffset, height - (viewOffset + camHeight * tuner), camWidth * tuner, camHeight * tuner);
 }
@@ -90,28 +160,35 @@ void updateDate() {
   month = month();
   day = day();
   year = year();
-
+  
   String[] dayArray = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
-  int dayOfWeek = new Date().getDay();
+  int dayOfWeek = new Date().getDay(); 
   String stringDayOfWeek = dayArray[dayOfWeek - 1];
 
-  String[] monthArray = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
-  String monthString = monthArray[month];
+  String[] monthArray = {"January", "February", "March", "April", "May", "June", "July", " August", "September", "October", "November", "December"};
+  String monthString = monthArray[month - 1];
 
   fullDateString = stringDayOfWeek + ", " + monthString + " " + day + ", " + year;
 }
 
 void drawDateLabel() {
-  textSize(40);
-  text(fullDateString, viewOffset, 170);
+  textAlign(RIGHT);
+  textSize(30);
+  text(fullDateString, width - viewOffset, 90 + viewOffset );
+  textAlign(LEFT);
 }
 
 void drawWeatherDisplay() {
-  textSize(40);
-  String fulltempString = "H: " + highTemp + ", L: " + lowTemp;
-  text(fulltempString, width - 340, 200);
+  float imageWidth = 80;
   
-  text(weatherDescription, width - 340, 160);
+  String fulltempString = "H: " + highTemp + ", L: " + lowTemp;
+  
+  //textAlign(LEFT, TOP);
+  textSize(34);
+  text(weatherDescription, 2 * viewOffset  + imageWidth, viewOffset + 34);
+  textSize(30);
+  text(fulltempString, 2 * viewOffset + imageWidth, viewOffset + 75);
+  //textAlign(LEFT, TOP);
 }
 
 void keyPressed() {
@@ -138,7 +215,6 @@ void resetWeather() {
   lowTemp = int(todayInfo.getString("low"));
   weatherDescription = todayInfo.getString("text");
 }
-
 
 class Calendar {
   String[] events;
