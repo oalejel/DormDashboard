@@ -14,7 +14,7 @@ int month = month();
 int day = day();
 int year = year();
 
-
+int lastMillis = 0;
 
 
 
@@ -26,10 +26,10 @@ int year = year();
 // Exercise 17-6: Stock Ticker 
 
 // An array of stock objects
-Stock[] stocks = new Stock[6];
+TickerItem[] tickerItems = new TickerItem[6];
 float totalW = 0;
 
-PFont f; // Global font variable
+PFont tickerFont; // Global font variable
 
 
 
@@ -42,30 +42,23 @@ void setup() {
   smooth(8);
   fullScreen();
   
-  
-  
-  f = createFont( "Arial", 16);
+  tickerFont = loadFont("RidetheFader-80.vlw");
 
   // Giving the stocks names and values to display
-  stocks[0] = new Stock("ZOOG", 903);
-  stocks[1] = new Stock("FOR", 55);
-  stocks[2] = new Stock("ELSE", 100);
-  stocks[3] = new Stock("BLAH", 100);
-  stocks[4] = new Stock("OF", 100);
-  stocks[5] = new Stock("PROC", 92);  
+  tickerItems[0] = new TickerItem("breaking news: there are no more hotdogs in NY!");
+  tickerItems[1] = new TickerItem("FOR");
+  tickerItems[2] = new TickerItem("ELSE");
+  tickerItems[3] = new TickerItem("BLAH");
+  tickerItems[4] = new TickerItem("OF");
+  tickerItems[5] = new TickerItem("PROC");  
 
   // We space the stock quotes out according to textWidth()
   float x = 0;
-  for (int i = 0; i < stocks.length; i++) {
-    stocks[i].setX(x);
-    x = x + (stocks[i].textW());
+  for (int i = 0; i < tickerItems.length; i++) {
+    tickerItems[i].setX(x);
+    x = x + (tickerItems[i].textW());
   }
   totalW = x;
-  
-  
-  
-  
-  
   
   //PFont helvetica = loadFont("Helvetica-Bold-200.vlw");
   //textFont(helvetica);
@@ -82,28 +75,30 @@ void setup() {
 }
 
 void draw() {
-  
-
-  
   //draw blue background and other background shapes
   background(0, 0, 74);
   fill(0,0,0);
   rect(0, 200, width, 60);
 
     // Move and display all quotes
-  for (int i = 0; i < stocks.length; i++) {
-    stocks[i].move();
-    stocks[i].display();
+  for (int i = 0; i < tickerItems.length; i++) {
+    tickerItems[i].move();
+    tickerItems[i].display(256);
   }
-
+  
+  //reset font to standard after stock ticker font changed
+  fill(255);
+  PFont standardFont = createFont("", 50);
+  textFont(standardFont);
 
   //set font color to white
   fill(255);
   upateTimeLabel();
   
-  updateCam();
+  
   drawWeatherDisplay();
   drawDateLabel();
+  updateCam();
   
   if (day != day()) {
     //we dont want to recalculate everything 
@@ -112,7 +107,7 @@ void draw() {
     resetWeather();
   }
 
-  delay(100);
+  delay(10);
 }
 
 void upateTimeLabel() {
@@ -144,15 +139,19 @@ void upateTimeLabel() {
 
 void updateCam() {
   textSize(30);
+  fill(255);
   text("Live UGLi Video Feed", viewOffset, 390);
   
-  if (cam.isAvailable()) {
+  if ((millis() - lastMillis >= 200) && cam.isAvailable()) {
     cam.read();
+    lastMillis = millis();
   }
+  
   
   float camWidth = 350;
   float camHeight = camWidth * (281.0 / 500.0);
   float tuner = 1.8;
+  rect(viewOffset - 4, height - ((viewOffset + camHeight * tuner) + 4), camWidth * tuner + 8, camHeight * tuner + 8);
   image(cam, viewOffset, height - (viewOffset + camHeight * tuner), camWidth * tuner, camHeight * tuner);
 }
 
@@ -200,7 +199,9 @@ void keyPressed() {
 }
 
 void resetWeather() {
-  String[] lines = loadStrings("https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20weather.forecast%20where%20woeid%20in%20(select%20woeid%20from%20geo.places(1)%20where%20text%3D%22ann%20arbor%2C%20MI%2C%20USA%22)&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys");
+  
+  try {
+    String[] lines = loadStrings("https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20weather.forecast%20where%20woeid%20in%20(select%20woeid%20from%20geo.places(1)%20where%20text%3D%22ann%20arbor%2C%20MI%2C%20USA%22)&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys");
   String jsonString = join(lines, " "); 
   
   JSONObject json = parseJSONObject(jsonString);
@@ -214,6 +215,10 @@ void resetWeather() {
   highTemp = int(todayInfo.getString("high"));
   lowTemp = int(todayInfo.getString("low"));
   weatherDescription = todayInfo.getString("text");
+  } catch (Exception e) {
+    println("weather error");
+  }
+  
 }
 
 class Calendar {
