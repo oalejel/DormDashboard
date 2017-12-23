@@ -7,6 +7,11 @@ IPCapture cam;
 int highTemp = 0;
 int lowTemp = 0;
 String weatherDescription = "";
+PImage weatherImg;
+
+float camY = 0;
+float camHeight = 0;
+float camWidth = 0;
 
 String fullDateString;
 
@@ -14,7 +19,8 @@ int month = month();
 int day = day();
 int year = year();
 
-int lastMillis = 0;
+int lastMillis_camera = 0;
+int lastMillis_headlines = 0;
 
 String[] headlineStrings = {};
  
@@ -24,6 +30,8 @@ float totalW = 0;
 PFont tickerFont; // Global font variable
 
 void setup() {
+  frameRate(10);
+  
   pixelDensity(2);
   //size(600, 600);
   smooth(8);
@@ -45,15 +53,11 @@ void setup() {
     x = x + (tickerItems[i].textW());
   }
   totalW = x;
-  
-  //PFont helvetica = loadFont("Helvetica-Bold-200.vlw");
-  //textFont(helvetica);
 
   cam = new IPCapture(this, "http://shapiro.cam.lib.umich.edu/mjpg/video.mjpg", "", "");
   cam.start();
 
   fill(255);
-  
   //call this on every new day
   resetWeather();
   updateDate();
@@ -63,14 +67,15 @@ void setup() {
 void draw() {
   //draw blue background and other background shapes
   background(0, 0, 74);
+  noStroke();
   fill(0,0,0);
-  rect(0, 200, width, 60);
-
+  rect(0, 250, width, 60);
+  
     // Move and display all quotes
   for (int i = 0; i < tickerItems.length; i++) {
     if (tickerItems[i] == null) {break;}
     tickerItems[i].move();
-    tickerItems[i].display(256);
+    tickerItems[i].display(306);
   }
   
   //reset font to standard after stock ticker font changed
@@ -82,10 +87,15 @@ void draw() {
   fill(255);
   upateTimeLabel();
   
-  
   drawWeatherDisplay();
   drawDateLabel();
   updateCam();
+  drawClassBox();
+  
+  if (millis() - lastMillis_headlines > 60000) {
+    getHeadlines();
+    lastMillis_headlines = millis();
+  }
   
   if (day != day()) {
     //we dont want to recalculate everything 
@@ -94,7 +104,7 @@ void draw() {
     resetWeather();
   }
 
-  delay(10);
+  //delay(10);
 }
 
 void upateTimeLabel() {
@@ -129,17 +139,17 @@ void updateCam() {
   fill(255);
   text("Live UGLi Video Feed", viewOffset, 390);
   
-  if ((millis() - lastMillis >= 200) && cam.isAvailable()) {
+  if ((millis() - lastMillis_camera >= 200) && cam.isAvailable()) {
     cam.read();
-    lastMillis = millis();
+    lastMillis_camera = millis();
   }
   
-  
-  float camWidth = 350;
-  float camHeight = camWidth * (281.0 / 500.0);
   float tuner = 1.8;
-  rect(viewOffset - 4, height - ((viewOffset + camHeight * tuner) + 4), camWidth * tuner + 8, camHeight * tuner + 8);
-  image(cam, viewOffset, height - (viewOffset + camHeight * tuner), camWidth * tuner, camHeight * tuner);
+  camWidth = 350 * tuner;
+  camHeight = camWidth * (281.0 / 500.0);
+  camY = height - ((viewOffset + camHeight) + 4);
+  rect(viewOffset - 4, camY, camWidth + 8, camHeight + 8);
+  image(cam, viewOffset, height - (viewOffset + camHeight), camWidth, camHeight);
 }
 
 void updateDate() {
@@ -164,16 +174,59 @@ void drawDateLabel() {
   textAlign(LEFT);
 }
 
+void drawClassBox() {
+  fill(0);
+  float classBoxWidth = width - (3 * viewOffset + camWidth);
+  float classBoxX = width - (classBoxWidth + viewOffset);
+  rect(classBoxX, camY, classBoxWidth, camHeight, 30);
+  
+  stroke(255);
+  line(classBoxX + 10, camY + camHeight * 0.5, classBoxX + classBoxWidth - 20, camY + (camHeight * 0.5));
+  
+  fill(255);
+  textAlign(CENTER, TOP);
+  textSize(25);
+  text("Vishnu's Current Class", classBoxX + 0.5 * classBoxWidth, camY + 5);
+  text("Omar's Current Class", classBoxX + 0.5 * classBoxWidth, camY + (camHeight * 0.5) + 5);
+  
+  textAlign(LEFT, TOP);
+  
+  //consider coloring green or orange based on progress in class time
+  //description labels (drawn after names since they share fonts)
+  text("STAMPS", classBoxX + 20, camY + 95);
+  text("Next: EECS 203 [CHRYS]", classBoxX + 20, camY + (camHeight * 0.5) + 85);
+  
+  //time labels
+  text("10:30 am - 12:30 pm", classBoxX + 20, camY + 125);
+  text("11:30 am - 1:00 pm", classBoxX + 20, camY + (camHeight * 0.5) + 115);
+  
+  //class name/status labels
+  textFont(createFont("Arial Black", 40));
+  text("EECS 280", classBoxX + 20, camY + 45);
+  text("None", classBoxX + 20, camY + (camHeight * 0.5) + 30);
+  
+  //set font back to normal
+  resetFont();
+}
+
+//resets font to standard font with size 40 and white fill
+void resetFont() {
+  fill(255);
+  textFont(createFont("", 40));
+}
+
 void drawWeatherDisplay() {
-  float imageWidth = 80;
+  float imageWidth = 160;
+  weatherImg = loadImage("raincloud.png");
+  image(weatherImg, viewOffset, viewOffset, imageWidth, imageWidth);
   
   String fulltempString = "H: " + highTemp + ", L: " + lowTemp;
   
   //textAlign(LEFT, TOP);
   textSize(34);
-  text(weatherDescription, 2 * viewOffset  + imageWidth, viewOffset + 34);
+  text(weatherDescription, 2 * viewOffset  + imageWidth, viewOffset + 64);
   textSize(30);
-  text(fulltempString, 2 * viewOffset + imageWidth, viewOffset + 75);
+  text(fulltempString, 2 * viewOffset + imageWidth, viewOffset + 105);
   //textAlign(LEFT, TOP);
 }
 
@@ -187,7 +240,7 @@ void keyPressed() {
 
 void getHeadlines() {
   try {
-    String[] lines = loadStrings("https://newsapi.org/v2/top-headlines?sources=cnn&apiKey=deab2cdaf5cc4eff8f415a85f2f47e1f");
+    String[] lines = loadStrings("https://newsapi.org/v2/top-headlines?sources=google-news&apiKey=deab2cdaf5cc4eff8f415a85f2f47e1f");
     String jsonString = join(lines, " ");
     JSONObject json = parseJSONObject(jsonString);
     
@@ -203,13 +256,9 @@ void getHeadlines() {
       String title = article.getString("title");
       tickerItems[i].display = title + " --- ";
     }
-
   } catch (Exception e) {
     println("news headlines error");
   }
-  
-  
-  
 }
 
 void resetWeather() {
@@ -231,7 +280,6 @@ void resetWeather() {
   } catch (Exception e) {
     println("weather error");
   }
-  
 }
 
 class Calendar {
