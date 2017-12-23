@@ -16,25 +16,12 @@ int year = year();
 
 int lastMillis = 0;
 
-
-
-
-
-
-
-
-// Exercise 17-6: Stock Ticker 
-
-// An array of stock objects
-TickerItem[] tickerItems = new TickerItem[6];
+String[] headlineStrings = {};
+ 
+// An array of headline ticker objects
+TickerItem[] tickerItems = new TickerItem[20];
 float totalW = 0;
-
 PFont tickerFont; // Global font variable
-
-
-
-
-
 
 void setup() {
   pixelDensity(2);
@@ -45,16 +32,15 @@ void setup() {
   tickerFont = loadFont("RidetheFader-80.vlw");
 
   // Giving the stocks names and values to display
-  tickerItems[0] = new TickerItem("breaking news: there are no more hotdogs in NY!");
-  tickerItems[1] = new TickerItem("FOR");
-  tickerItems[2] = new TickerItem("ELSE");
-  tickerItems[3] = new TickerItem("BLAH");
-  tickerItems[4] = new TickerItem("OF");
-  tickerItems[5] = new TickerItem("PROC");  
+  tickerItems[0] = new TickerItem("CNN News headlines not yet received");
+  
+  getHeadlines();
 
   // We space the stock quotes out according to textWidth()
   float x = 0;
+  println(tickerItems.length);
   for (int i = 0; i < tickerItems.length; i++) {
+    if (tickerItems[i] == null) {break;}
     tickerItems[i].setX(x);
     x = x + (tickerItems[i].textW());
   }
@@ -82,6 +68,7 @@ void draw() {
 
     // Move and display all quotes
   for (int i = 0; i < tickerItems.length; i++) {
+    if (tickerItems[i] == null) {break;}
     tickerItems[i].move();
     tickerItems[i].display(256);
   }
@@ -198,23 +185,49 @@ void keyPressed() {
   }
 }
 
-void resetWeather() {
+void getHeadlines() {
+  try {
+    String[] lines = loadStrings("https://newsapi.org/v2/top-headlines?sources=cnn&apiKey=deab2cdaf5cc4eff8f415a85f2f47e1f");
+    String jsonString = join(lines, " ");
+    JSONObject json = parseJSONObject(jsonString);
+    
+    int numArticles = json.getInt("totalResults");
+    JSONArray articles = json.getJSONArray("articles");
+    
+    for (int i = 0; i < numArticles; i++) {
+      if (tickerItems[i] == null) {
+        tickerItems[i] = new TickerItem("");
+      }
+      
+      JSONObject article = articles.getJSONObject(i);
+      String title = article.getString("title");
+      tickerItems[i].display = title + " --- ";
+    }
+
+  } catch (Exception e) {
+    println("news headlines error");
+  }
   
+  
+  
+}
+
+void resetWeather() {
   try {
     String[] lines = loadStrings("https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20weather.forecast%20where%20woeid%20in%20(select%20woeid%20from%20geo.places(1)%20where%20text%3D%22ann%20arbor%2C%20MI%2C%20USA%22)&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys");
-  String jsonString = join(lines, " "); 
-  
-  JSONObject json = parseJSONObject(jsonString);
-  JSONObject query = json.getJSONObject("query");
-  JSONObject results = query.getJSONObject("results");
-  JSONObject channel = results.getJSONObject("channel");
-  JSONObject item = channel.getJSONObject("item");
-  JSONArray forecast = item.getJSONArray("forecast");
-  //println(item);
-  JSONObject todayInfo = forecast.getJSONObject(0);
-  highTemp = int(todayInfo.getString("high"));
-  lowTemp = int(todayInfo.getString("low"));
-  weatherDescription = todayInfo.getString("text");
+    String jsonString = join(lines, " "); 
+    
+    JSONObject json = parseJSONObject(jsonString);
+    JSONObject query = json.getJSONObject("query");
+    JSONObject results = query.getJSONObject("results");
+    JSONObject channel = results.getJSONObject("channel");
+    JSONObject item = channel.getJSONObject("item");
+    JSONArray forecast = item.getJSONArray("forecast");
+    //println(item);
+    JSONObject todayInfo = forecast.getJSONObject(0);
+    highTemp = int(todayInfo.getString("high"));
+    lowTemp = int(todayInfo.getString("low"));
+    weatherDescription = todayInfo.getString("text");
   } catch (Exception e) {
     println("weather error");
   }
