@@ -1,4 +1,4 @@
-import java.util.Date;
+import java.util.Date; //<>//
 import ipcapture.*;
 
 int viewOffset = 40;
@@ -21,11 +21,19 @@ int year = year();
 
 int lastMillis_camera = 0;
 int lastMillis_headlines = 0;
+int lastMinute = minute();
 
 String[] headlineStrings = {};
 
+//schedule
 CourseSchedule omarSchedule;
 CourseSchedule vishnuSchedule;
+String omarTitle = "";
+String omarDescription = "";
+String omarRangeTitle = "";
+String vishnuTitle = "";
+String vishnuDescription = "";
+String vishnuRangeTitle = "";
 
 // An array of headline ticker objects
 TickerItem[] tickerItems = new TickerItem[20];
@@ -33,7 +41,7 @@ float totalW = 0;
 PFont tickerFont; // Global font variable
 
 void setup() {
-  frameRate(10);
+  frameRate(20);
 
   pixelDensity(2);
   //size(600, 600);
@@ -70,24 +78,31 @@ void setup() {
 
   //setup all courses
   setupOmarCourses();
-  
-  Course c = omarSchedule.getCurrentCourse();
-  if (c == null) {
-    //returns null when no class happneing -> use nextCourse()
-    
-  }
-  String title = c.title;
-  println(title);
-  //String cLocation = c.location;
-  //String timeRangeString = c.timeRangeString();
+  setupVishnuCourses();
+
+  //then draw the course info
+  updateCourseLabels();
+  background(0, 0, 74);
+
+  //drawing for the camera area
+  float tuner = 1.8;
+  camWidth = 350 * tuner;
+  camHeight = camWidth * (281.0 / 500.0);
+  camY = height - ((viewOffset + camHeight) + 4);
+      rect(viewOffset - 4, camY, camWidth + 8, camHeight + 8);
+
 }
+
 
 void draw() {
   //draw blue background and other background shapes
-  background(0, 0, 74);
+  //background(0, 0, 74);
   noStroke();
   fill(0, 0, 0);
-  rect(0, 250, width, 60);
+  strokeWeight(10);
+  stroke(0, 0, 74);
+  rect(-10, 240, width + 10, 80);
+  strokeWeight(1);
 
   // Move and display all quotes
   for (int i = 0; i < tickerItems.length; i++) {
@@ -124,6 +139,11 @@ void draw() {
     resetWeather();
   }
 
+  if (minute() != lastMinute) {
+    lastMinute = minute();
+    updateCourseLabels();
+  }
+
   //delay(10);
 }
 
@@ -147,6 +167,10 @@ void upateTimeLabel() {
     hString = "12";
   }
 
+  fill(0, 0, 74);
+  rect(width / 1.5, 0, 500, 200);
+  fill(255);
+
   String timeString = hString + ":" + mString + ":" + sString + " " + periodString; 
   //change text alignment for labels on right side
   textAlign(RIGHT);
@@ -159,17 +183,19 @@ void updateCam() {
   fill(255);
   text("Live UGLi Video Feed", viewOffset, 390);
 
-  if ((millis() - lastMillis_camera >= 200) && cam.isAvailable()) {
-    cam.read();
-    lastMillis_camera = millis();
+  if (cam.isAvailable()) {
+    //thread("drawCam");
+    drawCam();
   }
+}
 
-  float tuner = 1.8;
-  camWidth = 350 * tuner;
-  camHeight = camWidth * (281.0 / 500.0);
-  camY = height - ((viewOffset + camHeight) + 4);
-  rect(viewOffset - 4, camY, camWidth + 8, camHeight + 8);
-  image(cam, viewOffset, height - (viewOffset + camHeight), camWidth, camHeight);
+void drawCam() {
+  fill(255);
+  //if (cam.isAvailable()) {
+    cam.read();
+    //lastMillis_camera = millis();
+    image(cam, viewOffset, height - (viewOffset + camHeight), camWidth, camHeight);
+  //}
 }
 
 void updateDate() {
@@ -215,17 +241,17 @@ void drawClassBox() {
 
   //consider coloring green or orange based on progress in class time
   //description labels (drawn after names since they share fonts)
-  text("STAMPS", classBoxX + 20, camY + 95);
-  text("Next: EECS 203 [CHRYS]", classBoxX + 20, camY + (camHeight * 0.5) + 85);
+  text(vishnuDescription, classBoxX + 20, camY + 95);
+  text(omarDescription, classBoxX + 20, camY + (camHeight * 0.5) + 85);
 
   //time labels
-  text("10:30 am - 12:30 pm", classBoxX + 20, camY + 125);
-  text("11:30 am - 1:00 pm", classBoxX + 20, camY + (camHeight * 0.5) + 115);
+  text(vishnuRangeTitle, classBoxX + 20, camY + 125);
+  text(omarRangeTitle, classBoxX + 20, camY + (camHeight * 0.5) + 115);
 
   //class name/status labels
   textFont(createFont("Arial Black", 40));
-  text("EECS 280", classBoxX + 20, camY + 45);
-  text("None", classBoxX + 20, camY + (camHeight * 0.5) + 30);
+  text(vishnuTitle, classBoxX + 20, camY + 45);
+  text(omarTitle, classBoxX + 20, camY + (camHeight * 0.5) + 30);
 
   //set font back to normal
   resetFont();
@@ -306,16 +332,98 @@ void resetWeather() {
   }
 }
 
-class Calendar {
-  String[] events;
-  String[] times;
+void updateCourseLabels() {
+  int omarCourseIndex = omarSchedule.currentCourseIndex();
 
-  int getNextEventIndex() {
-    return 0;
+  if (omarCourseIndex == -1) {
+    //returns -1 when no class happening -> use nextCourseIndex()
+    int nextCourseIndex = omarSchedule.nextCourseIndex();
+    Course c = omarSchedule.courseForIndex(nextCourseIndex);
+    omarTitle = "None";
+    omarDescription = "Next: " + c.title + " [" + c.location + "]";
+    DateRange r = omarSchedule.dateRangeForIndex(nextCourseIndex);
+    omarRangeTitle = r.descriptionString();
+  } else {
+    Course c = omarSchedule.courseForIndex(omarCourseIndex);
+    omarTitle = c.title;
+    omarDescription = c.location;
+
+    DateRange r = omarSchedule.dateRangeForIndex(omarCourseIndex);
+    omarRangeTitle = r.descriptionString();
+  }
+
+  int vishnuCourseIndex = vishnuSchedule.currentCourseIndex();
+
+  if (vishnuCourseIndex == -1) {
+    //returns -1 when no class happening -> use nextCourseIndex()
+    int nextCourseIndex = vishnuSchedule.nextCourseIndex();
+    Course c = vishnuSchedule.courseForIndex(nextCourseIndex);
+    vishnuTitle = "None";
+    vishnuDescription = "Next: " + c.title + " [" + c.location + "]";
+    DateRange r = vishnuSchedule.dateRangeForIndex(nextCourseIndex);
+    vishnuRangeTitle = r.descriptionString();
+  } else {
+    Course c = vishnuSchedule.courseForIndex(vishnuCourseIndex);
+    vishnuTitle = c.title;
+    vishnuDescription = c.location;
+
+    DateRange r = vishnuSchedule.dateRangeForIndex(vishnuCourseIndex);
+    vishnuRangeTitle = r.descriptionString();
   }
 }
 
+void setupVishnuCourses() {
+  println("setting up vishnu courses!");
+  vishnuSchedule = new CourseSchedule();
+
+  Course math217 = new Course("MATH217 Lec", "B737 EH");
+  DateRange mathRange1 = new DateRange(new SimpleDate(1, 8, 30), new SimpleDate(1, 10, 0));
+  DateRange mathRange2 = new DateRange(new SimpleDate(3, 8, 30), new SimpleDate(3, 10, 0));
+  DateRange mathRange3 = new DateRange(new SimpleDate(5, 8, 30), new SimpleDate(5, 10, 0));
+  math217.addDateRange(mathRange1);
+  math217.addDateRange(mathRange2);
+  math217.addDateRange(mathRange3);
+
+  Course eecs280 = new Course("EECS280 Lec", "1013 DOW");
+  DateRange eecsRange1 = new DateRange(new SimpleDate(1, 10, 30), new SimpleDate(1, 12, 0));
+  DateRange eecsRange2 = new DateRange(new SimpleDate(3, 10, 30), new SimpleDate(3, 12, 0));
+  eecs280.addDateRange(eecsRange1);
+  eecs280.addDateRange(eecsRange2);
+
+  Course eecs280Lab = new Course("EECS280 Lab", "1303 EECS");
+  DateRange eecsLabRange1 = new DateRange(new SimpleDate(5, 12, 0), new SimpleDate(5, 14, 0));
+  eecs280Lab.addDateRange(eecsLabRange1);
+
+  Course eng100Lec = new Course("ENGR100 Lec", "1109 FXB");
+  DateRange eng100Range1 = new DateRange(new SimpleDate(2, 10, 30), new SimpleDate(2, 12, 0));
+  DateRange eng100Range2 = new DateRange(new SimpleDate(4, 10, 30), new SimpleDate(4, 12, 0));
+  eng100Lec.addDateRange(eng100Range1);
+  eng100Lec.addDateRange(eng100Range2);
+
+  Course eng100Lab = new Course("ENGR100 Lab", "108 GFL");
+  DateRange engLabRange = new DateRange(new SimpleDate(2, 15, 30), new SimpleDate(2, 17, 30));
+  eng100Lab.addDateRange(engLabRange);
+
+  Course eng100Disc = new Course("ENGR100 Disc", "1005 EECS");
+  DateRange engDiscRange = new DateRange(new SimpleDate(5, 10, 30), new SimpleDate(5, 11, 30));
+  eng100Disc.addDateRange(engDiscRange);
+
+  Course discMathLec = new Course("EECS203 Lec", "AUD CHRYS");
+  DateRange discRange1 = new DateRange(new SimpleDate(2, 12, 0), new SimpleDate(2, 13, 30));
+  DateRange discRange2 = new DateRange(new SimpleDate(4, 12, 0), new SimpleDate(4, 13, 30));
+  discMathLec.addDateRange(discRange1);
+  discMathLec.addDateRange(discRange2);
+
+  Course discMathDisc = new Course("EECS203 Disc", "2166 DOW");
+  DateRange discRange3 = new DateRange(new SimpleDate(3, 12, 30), new SimpleDate(3, 13, 30));
+  discMathDisc.addDateRange(discRange3);
+
+  Course[] vishnuCourses = {math217, eecs280, eecs280Lab, eng100Lec, eng100Lab, eng100Disc, discMathLec, discMathDisc};
+  vishnuSchedule.setCourses(vishnuCourses);
+}
+
 void setupOmarCourses() {
+  println("setting up omar courses!");
   //SimpleDate(int _dayOfWeek, int _hour, int _minute)
   //sunday - saturday; sunday = 0
 
@@ -367,11 +475,7 @@ void setupOmarCourses() {
   eecs203Disc.addDateRange(eecsRange2);
   eecs203Disc.addDateRange(eecsRange3);
 
-  Course testCourse = new Course("TEST", "LOCATION");
-  DateRange testRange = new DateRange(new SimpleDate(0, 1, 0), new SimpleDate(0, 23, 30));
-  testCourse.addDateRange(testRange);
-
   //add courses to omar's schedule
-  Course[] omarCourses = {testCourse, eng100, eng100Lab, eng100Other, econ101Discussion, econ101Other, math215Disc, math215Lab, eecs203Lab, eecs203Disc};
+  Course[] omarCourses = {eng100, eng100Lab, eng100Other, econ101Discussion, econ101Other, math215Disc, math215Lab, eecs203Lab, eecs203Disc};
   omarSchedule.setCourses(omarCourses);
 }

@@ -16,7 +16,7 @@ class TickerItem {
   
   // Scroll the quote and reset it when it gets far enough offscreen
   void move() {
-    x = x - 12;
+    x = x - 20;
     if (x < width - (100 + totalW)) {
       x = width;
     } 
