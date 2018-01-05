@@ -41,7 +41,7 @@ float totalW = 0;
 PFont tickerFont; // Global font variable
 
 void setup() {
-  frameRate(20);
+  frameRate(60);
 
   pixelDensity(2);
   //size(600, 600);
@@ -89,8 +89,7 @@ void setup() {
   camWidth = 350 * tuner;
   camHeight = camWidth * (281.0 / 500.0);
   camY = height - ((viewOffset + camHeight) + 4);
-      rect(viewOffset - 4, camY, camWidth + 8, camHeight + 8);
-
+  rect(viewOffset - 4, camY, camWidth + 8, camHeight + 8);
 }
 
 
@@ -101,7 +100,7 @@ void draw() {
   fill(0, 0, 0);
   strokeWeight(10);
   stroke(0, 0, 74);
-  rect(-10, 240, width + 10, 80);
+  rect(-10, 240, width + 20, 80);
   strokeWeight(1);
 
   // Move and display all quotes
@@ -132,6 +131,12 @@ void draw() {
     lastMillis_headlines = millis();
   }
 
+  //if (millis() - lastMillis_headlines > 6000) {
+  //  print("ohhhhh" + millis());
+  //  tickerItems[0].display = "hallo";
+  //  lastMillis_headlines = millis();
+  //}
+  
   if (day != day()) {
     //we dont want to recalculate everything 
     //unless we have a new day for some things
@@ -145,6 +150,10 @@ void draw() {
   }
 
   //delay(10);
+}
+
+void setBlueFill() {
+  fill(0, 0, 74);
 }
 
 void upateTimeLabel() {
@@ -167,7 +176,7 @@ void upateTimeLabel() {
     hString = "12";
   }
 
-  fill(0, 0, 74);
+  setBlueFill();
   rect(width / 1.5, 0, 500, 200);
   fill(255);
 
@@ -192,9 +201,9 @@ void updateCam() {
 void drawCam() {
   fill(255);
   //if (cam.isAvailable()) {
-    cam.read();
-    //lastMillis_camera = millis();
-    image(cam, viewOffset, height - (viewOffset + camHeight), camWidth, camHeight);
+  cam.read();
+  //lastMillis_camera = millis();
+  image(cam, viewOffset, height - (viewOffset + camHeight), camWidth, camHeight);
   //}
 }
 
@@ -205,9 +214,7 @@ void updateDate() {
 
   String[] dayArray = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
   int dayOfWeek = new Date().getDay(); 
-  println(dayOfWeek);
   String stringDayOfWeek = dayArray[dayOfWeek];
-
 
   String[] monthArray = {"January", "February", "March", "April", "May", "June", "July", " August", "September", "October", "November", "December"};
   String monthString = monthArray[month - 1];
@@ -216,9 +223,16 @@ void updateDate() {
 }
 
 void drawDateLabel() {
+  //set fill to blue for camoflauge
+  setBlueFill();
+  //fill(44);//test to make sre all good
+  rect(width - (2 + viewOffset + textWidth(fullDateString)), 60 + viewOffset, textWidth(fullDateString) + 4, 40);
+
   textAlign(RIGHT);
   textSize(30);
-  text(fullDateString, width - viewOffset, 90 + viewOffset );
+
+  fill(255);
+  text(fullDateString, width - viewOffset, 90 + viewOffset);
   textAlign(LEFT);
 }
 
@@ -265,6 +279,10 @@ void resetFont() {
 
 void drawWeatherDisplay() {
   float imageWidth = 160;
+  setBlueFill();
+  rect(viewOffset, viewOffset, 2 * viewOffset + imageWidth + textWidth(weatherDescription), imageWidth);
+  fill(255);
+  
   weatherImg = loadImage("raincloud.png");
   image(weatherImg, viewOffset, viewOffset, imageWidth, imageWidth);
 
@@ -302,7 +320,7 @@ void getHeadlines() {
 
       JSONObject article = articles.getJSONObject(i);
       String title = article.getString("title");
-      tickerItems[i].display = title + " --- ";
+      tickerItems[i].display = " --- " + title;
     }
   } 
   catch (Exception e) {

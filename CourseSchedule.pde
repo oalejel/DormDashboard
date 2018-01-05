@@ -44,10 +44,6 @@ class Course {
     dateRanges[numBlocks] = dr;
     numBlocks++;
   }
-
-  String timeRangeString() {
-    return "time - time";
-  }
 }
 
 class CourseSchedule {
