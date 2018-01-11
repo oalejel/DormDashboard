@@ -42,10 +42,9 @@ PFont tickerFont; // Global font variable
 
 void setup() {
   frameRate(60);
-
-  pixelDensity(2);
+  //pixelDensity(2);
   //size(600, 600);
-  smooth(8);
+  //smooth(4);
   fullScreen();
 
   tickerFont = loadFont("RidetheFader-80.vlw");
@@ -85,8 +84,7 @@ void setup() {
   background(0, 0, 74);
 
   //drawing for the camera area
-  float tuner = 1.8;
-  camWidth = 350 * tuner;
+  camWidth = (width / 2);
   camHeight = camWidth * (281.0 / 500.0);
   camY = height - ((viewOffset + camHeight) + 4);
   rect(viewOffset - 4, camY, camWidth + 8, camHeight + 8);
@@ -190,7 +188,7 @@ void upateTimeLabel() {
 void updateCam() {
   textSize(30);
   fill(255);
-  text("Live UGLi Video Feed", viewOffset, 390);
+  text("Live UGLi Video Feed", viewOffset, height - (camHeight + viewOffset * 2));
 
   if (cam.isAvailable()) {
     //thread("drawCam");
